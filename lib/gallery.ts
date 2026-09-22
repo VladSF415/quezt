@@ -15,26 +15,18 @@ export const galleryImages: GalleryImage[] = [
   },
   {
     src: "/images/gallery-04.jpg",
-    alt: "Five players wearing medals together on the blue court after their games",
+    alt: "Four players with their medals and the coach on a sunny day at the court",
   },
   {
     src: "/images/gallery-05.jpg",
-    alt: "A team of four with their medals on a sunny day at the court",
-  },
-  {
-    src: "/images/gallery-06.jpg",
     alt: "A group of young men with the coach and a referee between games",
   },
   {
+    src: "/images/gallery-06.jpg",
+    alt: "Players and a referee together with their medals on the court",
+  },
+  {
     src: "/images/gallery-07.jpg",
-    alt: "Four players lined up with medals on a clear day at the court",
-  },
-  {
-    src: "/images/gallery-08.jpg",
-    alt: "A team with the coach at a community event day on the court",
-  },
-  {
-    src: "/images/gallery-09.jpg",
     alt: "Members of the community together at a Quezt event",
   },
 ];

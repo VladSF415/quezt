@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+/* ---- Quezt design tokens ---- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --court-black: #0b0b0f;
+  --court-black-2: #14141c;
+  --gold: #f4b21a;
+  --purple: #6c2bd9;
+  --chalk: #f5f3ee;
+  --red: #e23b3b;
+  --line: rgba(245, 243, 238, 0.14);
+
+  --background: var(--court-black);
+  --foreground: var(--chalk);
 }
 
 @theme inline {
+  --color-court: var(--court-black);
+  --color-court-2: var(--court-black-2);
+  --color-gold: var(--gold);
+  --color-purple: var(--purple);
+  --color-chalk: var(--chalk);
+  --color-red: var(--red);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-display);
+  --font-stencil: var(--font-stencil);
+  --font-body: var(--font-body);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--court-black);
+  color: var(--chalk);
+  font-family: var(--font-body), system-ui, sans-serif;
+  /* faint painted court lines over night black */
+  background-image:
+    radial-gradient(circle at 50% -10%, rgba(108, 43, 217, 0.22), transparent 55%),
+    linear-gradient(transparent 0, transparent calc(100% - 1px), var(--line) 100%),
+    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), var(--line) 100%);
+  background-size: 100% 100%, 64px 64px, 64px 64px;
+}
+
+/* Display type: compressed, athletic, jersey-loud */
+.font-display {
+  font-family: var(--font-display), Impact, sans-serif;
+  letter-spacing: 0.01em;
+  line-height: 0.92;
+  text-transform: uppercase;
+}
+
+/* Stenciled scoreboard label */
+.scoretag {
+  font-family: var(--font-stencil), sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--court-black);
+  background: var(--gold);
+  padding: 0.28rem 0.7rem;
+  display: inline-block;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+.scoretag--purple {
+  background: var(--purple);
+  color: var(--chalk);
+}
+
+/* Taped flyer card: like a photocopy stapled to a fence */
+.taped {
+  background: var(--chalk);
+  color: var(--court-black);
+  border: 2px solid var(--court-black);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55);
+  position: relative;
+}
+
+/* strip of "tape" at the top corners */
+.taped::before,
+.taped::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  width: 74px;
+  height: 24px;
+  background: rgba(244, 178, 26, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+.taped::before {
+  left: 16px;
+  transform: rotate(-7deg);
+}
+.taped::after {
+  right: 16px;
+  transform: rotate(6deg);
+}
+
+/* Loud outlined display text (stadium / chalk outline) */
+.chalk-outline {
+  color: var(--chalk);
+  -webkit-text-stroke: 2px var(--court-black);
+  paint-order: stroke fill;
+}
+
+/* red action button, hard offset shadow */
+.btn-register {
+  background: var(--red);
+  color: var(--chalk);
+  font-family: var(--font-display), Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--court-black);
+  box-shadow: 5px 5px 0 var(--court-black);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.btn-register:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--court-black);
+}
+.btn-register:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--court-black);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-register {
+    transition: none;
+  }
+}
+
+/* visible keyboard focus everywhere */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
 }
