@@ -76,24 +76,27 @@ body {
   position: relative;
 }
 
-/* strip of "tape" at the top corners */
-.taped::before,
-.taped::after {
+/* strip of "tape" at the top corners — only on cards marked .taped--tape
+   (photo and video cards). Content cards use .taped without the strips so
+   nothing floats in the layout gaps. */
+.taped--tape::before,
+.taped--tape::after {
   content: "";
   position: absolute;
-  top: -12px;
-  width: 74px;
-  height: 24px;
-  background: rgba(244, 178, 26, 0.72);
+  top: -8px;
+  width: 66px;
+  height: 20px;
+  background: rgba(244, 178, 26, 0.8);
   border: 1px solid rgba(0, 0, 0, 0.25);
+  z-index: 2;
 }
-.taped::before {
-  left: 16px;
-  transform: rotate(-7deg);
+.taped--tape::before {
+  left: 18px;
+  transform: rotate(-6deg);
 }
-.taped::after {
-  right: 16px;
-  transform: rotate(6deg);
+.taped--tape::after {
+  right: 18px;
+  transform: rotate(5deg);
 }
 
 /* Loud outlined display text (stadium / chalk outline) */

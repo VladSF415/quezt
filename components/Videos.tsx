@@ -21,7 +21,7 @@ export function Videos() {
           {YOUTUBE_SHORT_IDS.map((id, i) => (
             <div
               key={id}
-              className={`taped self-start p-2 ${tilts[i % tilts.length]}`}
+              className={`taped taped--tape self-start p-2 ${tilts[i % tilts.length]}`}
             >
               <div
                 className="relative w-full overflow-hidden"

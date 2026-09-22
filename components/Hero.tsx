@@ -39,7 +39,7 @@ export function Hero() {
           </div>
 
           <div className="relative">
-            <div className="taped rotate-2 p-2">
+            <div className="taped taped--tape rotate-2 p-2">
               <Image
                 src="/images/hero.jpg"
                 alt="Coach kneeling next to a young player, both wearing first place medals at the court"

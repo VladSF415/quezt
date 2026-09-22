@@ -36,7 +36,7 @@ export function EventInfo({
         </h2>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[0.72fr_1fr] lg:items-start">
-          <figure className="taped -rotate-1 p-2">
+          <figure className="taped taped--tape -rotate-1 p-2">
             <Image
               src="/images/flyer.jpg"
               alt="Quezt Community Basketball Event flyer with the tournament details, prizes, and sponsors"

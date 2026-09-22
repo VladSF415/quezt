@@ -31,7 +31,7 @@ export function Gallery() {
           {galleryImages.map((img, i) => (
             <figure
               key={img.src}
-              className={`taped self-start p-2 ${tilts[i % tilts.length]}`}
+              className={`taped taped--tape self-start p-2 ${tilts[i % tilts.length]}`}
             >
               <Image
                 src={img.src}
