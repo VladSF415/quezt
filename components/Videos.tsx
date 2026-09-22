@@ -1,8 +1,10 @@
-import { YOUTUBE_VIDEO_ID, YOUTUBE_CHANNEL_URL } from "@/lib/site";
+import { YOUTUBE_SHORT_IDS, YOUTUBE_CHANNEL_URL } from "@/lib/site";
 
-// Renders nothing until a YouTube video ID is set in lib/site.ts.
+const tilts = ["-rotate-2", "rotate-1", "rotate-2", "-rotate-1", "rotate-1", "-rotate-2"];
+
+// Renders nothing until at least one Short ID is set in lib/site.ts.
 export function Videos() {
-  if (!YOUTUBE_VIDEO_ID) return null;
+  if (YOUTUBE_SHORT_IDS.length === 0) return null;
 
   return (
     <section className="border-b-2 border-black/60 py-16 md:py-20">
@@ -15,20 +17,31 @@ export function Videos() {
           Real hoops from Quezt events. Turn the sound up.
         </p>
 
-        <div className="taped mt-10 -rotate-1 p-2">
-          <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
-            <iframe
-              className="absolute inset-0 h-full w-full"
-              src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}`}
-              title="Quezt basketball highlights"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
+        <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          {YOUTUBE_SHORT_IDS.map((id, i) => (
+            <div
+              key={id}
+              className={`taped self-start p-2 ${tilts[i % tilts.length]}`}
+            >
+              <div
+                className="relative w-full overflow-hidden"
+                style={{ aspectRatio: "9 / 16" }}
+              >
+                <iframe
+                  className="absolute inset-0 h-full w-full"
+                  src={`https://www.youtube-nocookie.com/embed/${id}`}
+                  title="Quezt basketball highlight"
+                  loading="lazy"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          ))}
         </div>
 
         {YOUTUBE_CHANNEL_URL && (
-          <div className="mt-6">
+          <div className="mt-10">
             <a
               href={YOUTUBE_CHANNEL_URL}
               target="_blank"
