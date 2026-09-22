@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type EventInfoProps = {
   name: string;
   date: Date;
@@ -33,7 +35,22 @@ export function EventInfo({
           {name}
         </h2>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-10 grid gap-8 lg:grid-cols-[0.72fr_1fr] lg:items-start">
+          <figure className="taped -rotate-1 p-2">
+            <Image
+              src="/images/flyer.jpg"
+              alt="Quezt Community Basketball Event flyer with the tournament details, prizes, and sponsors"
+              width={1024}
+              height={1536}
+              className="h-auto w-full"
+              sizes="(max-width: 1024px) 100vw, 40vw"
+            />
+            <figcaption className="scoretag mt-2 mb-1 ml-1 text-[0.6rem]">
+              The official flyer
+            </figcaption>
+          </figure>
+
+          <div className="grid gap-6 sm:grid-cols-2">
           <div className="taped p-6 pt-8">
             <span className="scoretag">When</span>
             <p className="font-display mt-3 text-2xl text-court">
@@ -48,11 +65,12 @@ export function EventInfo({
               Location details go out to registered teams.
             </p>
           </div>
-          <div className="taped p-6 pt-8">
+          <div className="taped p-6 pt-8 sm:col-span-2">
             <span className="scoretag">Prizes</span>
             <p className="mt-3 text-court/90">
               {prizes ?? "Prizes for winners in every age division."}
             </p>
+          </div>
           </div>
         </div>
 
