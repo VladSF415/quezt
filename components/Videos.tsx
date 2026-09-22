@@ -1,8 +1,55 @@
+"use client";
+
+import { useState } from "react";
 import { YOUTUBE_SHORT_IDS, YOUTUBE_CHANNEL_URL } from "@/lib/site";
 
 const tilts = ["-rotate-2", "rotate-1", "rotate-2", "-rotate-1", "rotate-1", "-rotate-2"];
 
-// Renders nothing until at least one Short ID is set in lib/site.ts.
+function ShortCard({ id, tilt }: { id: string; tilt: string }) {
+  const [play, setPlay] = useState(false);
+
+  return (
+    <div className={`taped taped--tape self-start p-2 ${tilt}`}>
+      <div
+        className="relative w-full overflow-hidden bg-black"
+        style={{ aspectRatio: "9 / 16" }}
+      >
+        {play ? (
+          <iframe
+            className="absolute inset-0 h-full w-full"
+            src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1`}
+            title="Quezt basketball highlight"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPlay(true)}
+            className="group absolute inset-0 h-full w-full"
+            aria-label="Play video"
+          >
+            {/* Lightweight thumbnail from YouTube instead of the full player */}
+            <img
+              src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+              alt="Quezt basketball highlight"
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-red text-chalk shadow-lg transition group-hover:scale-110">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+            </span>
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Videos() {
   if (YOUTUBE_SHORT_IDS.length === 0) return null;
 
@@ -19,24 +66,7 @@ export function Videos() {
 
         <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {YOUTUBE_SHORT_IDS.map((id, i) => (
-            <div
-              key={id}
-              className={`taped taped--tape self-start p-2 ${tilts[i % tilts.length]}`}
-            >
-              <div
-                className="relative w-full overflow-hidden"
-                style={{ aspectRatio: "9 / 16" }}
-              >
-                <iframe
-                  className="absolute inset-0 h-full w-full"
-                  src={`https://www.youtube-nocookie.com/embed/${id}`}
-                  title="Quezt basketball highlight"
-                  loading="lazy"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
+            <ShortCard key={id} id={id} tilt={tilts[i % tilts.length]} />
           ))}
         </div>
 
