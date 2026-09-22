@@ -2,7 +2,10 @@
 
 import { prisma } from "@/lib/db";
 import { registrationSchema } from "@/lib/registration-schema";
-import { sendCoachNotification } from "@/lib/email";
+import {
+  sendCoachNotification,
+  sendRegistrantConfirmation,
+} from "@/lib/email";
 
 export async function registerTeam(
   input: unknown
@@ -32,10 +35,16 @@ export async function registerTeam(
     },
   });
 
+  const withEvent = { ...data, eventName: event.name };
   try {
-    await sendCoachNotification({ ...data, eventName: event.name });
+    await sendCoachNotification(withEvent);
   } catch (e) {
-    console.error("[register] notification failed", e);
+    console.error("[register] coach notification failed", e);
+  }
+  try {
+    await sendRegistrantConfirmation(withEvent);
+  } catch (e) {
+    console.error("[register] registrant confirmation failed", e);
   }
 
   return { ok: true };

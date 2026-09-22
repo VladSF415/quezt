@@ -130,3 +130,84 @@ export function renderCoachNotificationText(reg: NotificationData): string {
     `Volunteering: ${volunteer}\n`
   );
 }
+
+// ---- Confirmation email to the person who registered ----
+
+export function renderRegistrantConfirmationHtml(reg: NotificationData): string {
+  const players = reg.players
+    .map((p) => `<div style="padding:2px 0;">${esc(p.first)} ${esc(p.last)}</div>`)
+    .join("");
+
+  return `<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:${INK};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${INK};padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;">
+
+          <tr>
+            <td style="background:${COURT};padding:28px 32px;">
+              ${tag("Quezt Sports Association", GOLD, COURT)}
+              <div style="font-family:'Arial Black',Arial,sans-serif;font-size:30px;line-height:1.05;color:${CHALK};text-transform:uppercase;font-weight:900;margin-top:16px;">
+                You're <span style="color:${GOLD};">in</span>
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#b9b9c4;margin-top:8px;">
+                ${esc(reg.eventName)}
+              </div>
+            </td>
+          </tr>
+
+          <tr><td style="height:5px;background:${GOLD};font-size:0;line-height:0;">&nbsp;</td></tr>
+
+          <tr>
+            <td style="background:${CHALK};padding:28px 32px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:${COURT};margin:0 0 18px;">
+                Thanks for registering <strong>${esc(reg.teamName)}</strong>. Your spot in the
+                <strong>${esc(reg.division)}</strong> division is saved. The coach will be in touch
+                with the details before the event.
+              </p>
+
+              <div style="margin-bottom:6px;">
+                ${tag("Your team", PURPLE, CHALK)}
+              </div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                ${row("Team", esc(reg.teamName))}
+                ${row("Division", esc(reg.division))}
+                ${row("Players", players)}
+              </table>
+
+              <div style="margin-top:24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6b6b6b;">
+                See you on the court.
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background:${COURT};padding:20px 32px;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a8a95;letter-spacing:1px;text-transform:uppercase;">
+                Quezt &middot; Real people, real support, real community
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export function renderRegistrantConfirmationText(reg: NotificationData): string {
+  const players = reg.players.map((p) => `${p.first} ${p.last}`).join(", ");
+  return (
+    `You're in. Thanks for registering ${reg.teamName} for ${reg.eventName}.\n\n` +
+    `Your spot in the ${reg.division} division is saved. The coach will be in ` +
+    `touch with the details before the event.\n\n` +
+    `Team: ${reg.teamName}\n` +
+    `Division: ${reg.division}\n` +
+    `Players: ${players}\n\n` +
+    `See you on the court.\n`
+  );
+}
