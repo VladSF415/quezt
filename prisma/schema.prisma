@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Event {
+  id                   String         @id @default(cuid())
+  name                 String
+  date                 DateTime
+  location             String
+  divisions            String[]
+  prizes               String?
+  registrationDeadline DateTime?
+  isActive             Boolean        @default(false)
+  createdAt            DateTime       @default(now())
+  registrations        Registration[]
+}
+
+model Registration {
+  id                  String   @id @default(cuid())
+  eventId             String
+  event               Event    @relation(fields: [eventId], references: [id])
+  teamName            String
+  players             Json // [{first,last} x4]
+  division            String
+  cellPhone           String?
+  email               String
+  volunteerReferee    Boolean  @default(false)
+  volunteerScoreboard Boolean  @default(false)
+  liabilityAgreed     Boolean  @default(false)
+  paid                Boolean  @default(false)
+  createdAt           DateTime @default(now())
+}

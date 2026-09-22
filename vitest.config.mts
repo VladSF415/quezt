@@ -1,12 +1,13 @@
+import "dotenv/config";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "path";
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": tsconfigPaths.resolve(__dirname, "."),
+      "@": resolve(import.meta.dirname, "."),
     },
   },
   test: { environment: "node", include: ["tests/**/*.test.ts"] },
