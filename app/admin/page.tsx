@@ -1,16 +1,25 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { isValidSession, SESSION_COOKIE } from "@/lib/auth";
+import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
 import { RegistrationsTable, type Row } from "./RegistrationsTable";
+import { CoachesSection } from "./CoachesSection";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
   const cookieStore = await cookies();
-  if (!isValidSession(cookieStore.get(SESSION_COOKIE)?.value)) {
+  const user = await getSessionUser(cookieStore.get(SESSION_COOKIE)?.value);
+  if (!user) {
     redirect("/admin/login");
   }
+  const isOwner = user.role === "owner";
+  const coaches = isOwner
+    ? await prisma.adminUser.findMany({
+        orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+        select: { id: true, email: true, name: true, role: true, lastLoginAt: true },
+      })
+    : [];
 
   const event = await prisma.event.findFirst({ where: { isActive: true } });
   const registrations = event
@@ -47,6 +56,9 @@ export default async function AdminDashboard() {
             )}
           </div>
           <div className="flex items-center gap-3">
+            <span className="hidden text-sm text-chalk/60 sm:inline">
+              {user.name || user.email}
+            </span>
             <a href="/api/admin/export" className="scoretag scoretag--purple py-2">
               Download CSV
             </a>
@@ -59,6 +71,8 @@ export default async function AdminDashboard() {
         </div>
 
         <RegistrationsTable rows={rows} />
+
+        {isOwner && <CoachesSection coaches={coaches} />}
       </div>
     </main>
   );
