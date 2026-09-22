@@ -1,3 +1,5 @@
+import { INSTAGRAM_URL, YOUTUBE_CHANNEL_URL } from "@/lib/site";
+
 const sponsors = [
   "3rd World Market",
   "Sir Hands Street Food",
@@ -18,13 +20,23 @@ export function SiteFooter() {
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <a
-                href="https://www.instagram.com/quezsf/"
+                href={INSTAGRAM_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="scoretag py-2"
               >
                 Instagram @quezsf
               </a>
+              {YOUTUBE_CHANNEL_URL && (
+                <a
+                  href={YOUTUBE_CHANNEL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="scoretag py-2"
+                >
+                  YouTube
+                </a>
+              )}
               <a href="mailto:info@quezt.org" className="scoretag scoretag--purple py-2">
                 info@quezt.org
               </a>

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { Hero } from "@/components/Hero";
 import { About } from "@/components/About";
 import { Gallery } from "@/components/Gallery";
+import { Videos } from "@/components/Videos";
 import { EventInfo } from "@/components/EventInfo";
 import { RegisterForm } from "@/components/RegisterForm";
 import { Training } from "@/components/Training";
@@ -15,6 +16,7 @@ export default async function Home() {
       <Hero />
       <About />
       <Gallery />
+      <Videos />
       {event && (
         <EventInfo
           name={event.name}
