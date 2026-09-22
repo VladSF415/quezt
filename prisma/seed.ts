@@ -5,7 +5,24 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-async function main() {
+async function seedOwner() {
+  const raw = process.env.OWNER_EMAIL;
+  if (!raw) {
+    console.log("[seed] OWNER_EMAIL not set, skipping owner bootstrap");
+    return;
+  }
+  const email = raw.trim().toLowerCase();
+  // Idempotent: ensure the owner account exists with role "owner". Never
+  // downgrades or overwrites an existing row's password/name.
+  await prisma.adminUser.upsert({
+    where: { email },
+    update: { role: "owner" },
+    create: { email, role: "owner" },
+  });
+  console.log(`[seed] owner ensured: ${email}`);
+}
+
+async function seedEvent() {
   const existing = await prisma.event.findFirst({ where: { isActive: true } });
   if (existing) {
     console.log("[seed] active event already exists, skipping");
@@ -24,6 +41,11 @@ async function main() {
     },
   });
   console.log("[seed] active event created");
+}
+
+async function main() {
+  await seedEvent();
+  await seedOwner();
 }
 
 main()

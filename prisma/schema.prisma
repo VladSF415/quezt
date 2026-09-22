@@ -34,3 +34,31 @@ model Registration {
   paid                Boolean  @default(false)
   createdAt           DateTime @default(now())
 }
+
+// An admin who can sign in to /admin. Access is invite-only: a row must
+// exist here (created by the owner) before that email can sign in, whether
+// by Google or password. Email is the login identity, always lowercased.
+model AdminUser {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  name         String?
+  passwordHash String? // null until a password is set (Google-only users stay null)
+  role         String      @default("coach") // "owner" | "coach"
+  createdAt    DateTime    @default(now())
+  lastLoginAt  DateTime?
+  tokens       AuthToken[]
+}
+
+// One-time, expiring tokens for invite ("set your password") and password
+// reset. Only the sha256 HASH is stored; the raw token lives only in the
+// emailed/handed-over link, so a database leak cannot be used to take over.
+model AuthToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  purpose   String // "invite" | "reset"
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}

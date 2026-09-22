@@ -39,8 +39,28 @@ Built with Next.js 16 + Postgres (Prisma 7) on Railway.
 | `RESEND_API_KEY` | Resend key. Leave empty to turn email off (signups still save). |
 | `RESEND_FROM` | Sender address. `onboarding@resend.dev` until quezt.org exists. |
 | `COACH_NOTIFY_EMAIL` | Where signup emails go. `queztbasketball@gmail.com`. |
-| `ADMIN_PASSWORD` | The coach dashboard password. |
 | `SESSION_SECRET` | Long random string used to sign the admin session cookie. |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID (for coach sign-in). |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret. |
+| `APP_URL` | Base URL, e.g. `https://quezt-production.up.railway.app`. Used to build the Google callback URL. Update when quezt.org goes live. |
+| `OWNER_EMAIL` | The first/owner admin account. Seeded on deploy; signs in with Google. |
+| `ADMIN_PASSWORD` | No longer used for login (accounts replaced the shared password). Safe to remove. |
+
+## Admin accounts (coach sign-in)
+
+The dashboard uses per-person accounts, invite-only:
+
+- The **owner** account is seeded from `OWNER_EMAIL` on deploy. Sign in at
+  `/admin/login` with **Sign in with Google** using that email.
+- In the dashboard, the owner adds coaches by email (Coaches section). Only
+  emails added there can sign in. Google carries identity, so this works
+  with no custom domain and no email setup.
+- Google OAuth setup: create a Web OAuth client in Google Cloud Console with
+  the redirect URI `<APP_URL>/api/auth/google/callback`, then set
+  `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in Railway.
+- Email + password login and password reset exist as a fallback but depend on
+  Resend delivering to non-owner addresses (works only after quezt.org is
+  verified). Google is the working path until then.
 
 ## Updating the next event
 
