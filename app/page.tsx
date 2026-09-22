@@ -7,6 +7,7 @@ import { Videos } from "@/components/Videos";
 import { EventInfo } from "@/components/EventInfo";
 import { RegisterForm } from "@/components/RegisterForm";
 import { Training } from "@/components/Training";
+import { ShareQR } from "@/components/ShareQR";
 import { SiteFooter } from "@/components/SiteFooter";
 
 // Dynamic so the build never touches the DB (only reachable at runtime), but
@@ -59,6 +60,7 @@ export default async function Home() {
         </div>
       </section>
       <Training />
+      <ShareQR />
       <SiteFooter />
     </main>
   );
