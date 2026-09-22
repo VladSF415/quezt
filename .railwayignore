@@ -1,0 +1,16 @@
+# Railway rebuilds these; no need to upload them
+node_modules
+.next
+.git
+
+# local-only
+.env
+.env.*
+!.env.example
+.verify
+.playwright-mcp
+docs
+
+# never upload sockets or docker artifacts
+**/*.sock
+.docker
