@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/db";
 import { exchangeCodeForProfile } from "@/lib/google";
-import { createSessionToken, SESSION_COOKIE, normalizeEmail } from "@/lib/auth";
+import {
+  createSessionToken,
+  SESSION_COOKIE,
+  normalizeEmail,
+  publicBaseUrl,
+} from "@/lib/auth";
 
 const STATE_COOKIE = "quezt_oauth_state";
 
@@ -24,7 +29,7 @@ function stateValid(cookieVal: string | undefined, returned: string | null): boo
 }
 
 function redirect(request: Request, path: string) {
-  return NextResponse.redirect(new URL(path, request.url));
+  return NextResponse.redirect(new URL(path, publicBaseUrl(request)));
 }
 
 // Google redirects here after consent. Verify CSRF state, exchange the code for

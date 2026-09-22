@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { randomBytes, createHmac } from "crypto";
 import { googleAuthUrl, googleConfigured } from "@/lib/google";
+import { publicBaseUrl } from "@/lib/auth";
 
 const STATE_COOKIE = "quezt_oauth_state";
 
@@ -9,7 +10,9 @@ const STATE_COOKIE = "quezt_oauth_state";
 // in a short-lived cookie, and redirect to Google's consent screen.
 export async function GET(request: Request) {
   if (!googleConfigured()) {
-    return NextResponse.redirect(new URL("/admin/login?error=google_off", request.url));
+    return NextResponse.redirect(
+      new URL("/admin/login?error=google_off", publicBaseUrl(request))
+    );
   }
   const state = randomBytes(16).toString("hex");
   const sig = createHmac("sha256", process.env.SESSION_SECRET || "")

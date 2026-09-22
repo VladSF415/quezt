@@ -74,3 +74,15 @@ export const RESET_TTL_MS = 60 * 60 * 1000; // 1 hour
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
+
+// The PUBLIC base URL for building redirects. Behind Railway's proxy,
+// request.url is the internal http://localhost:8080, so redirects built from
+// it send the browser to localhost. Prefer APP_URL, then forwarded headers.
+export function publicBaseUrl(request: Request): string {
+  const configured = (process.env.APP_URL || "").replace(/\/$/, "");
+  if (configured) return configured;
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  const host =
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  return host ? `${proto}://${host}` : new URL(request.url).origin;
+}
