@@ -53,7 +53,7 @@ export default async function Home() {
           registrationDeadline={event.registrationDeadline}
         />
       )}
-      <section id="register" className="border-b-2 border-black/60 py-16 md:py-20">
+      <section id="register" className="border-b-2 border-black/60 py-12 md:py-16">
         <div className="mx-auto max-w-3xl px-5">
           <RegisterForm deadline={event?.registrationDeadline ?? null} />
         </div>

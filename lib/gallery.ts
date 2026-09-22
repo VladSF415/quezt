@@ -25,8 +25,4 @@ export const galleryImages: GalleryImage[] = [
     src: "/images/gallery-06.jpg",
     alt: "Players and a referee together with their medals on the court",
   },
-  {
-    src: "/images/gallery-07.jpg",
-    alt: "Members of the community together at a Quezt event",
-  },
 ];

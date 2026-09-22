@@ -28,7 +28,7 @@ export function EventInfo({
   registrationDeadline,
 }: EventInfoProps) {
   return (
-    <section id="event" className="border-b-2 border-black/60 py-16 md:py-20">
+    <section id="event" className="border-b-2 border-black/60 py-12 md:py-16">
       <div className="mx-auto max-w-6xl px-5">
         <span className="scoretag scoretag--purple">Next event</span>
         <h2 className="font-display mt-4 text-4xl text-chalk sm:text-5xl md:text-6xl">

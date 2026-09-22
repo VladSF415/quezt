@@ -1,6 +1,6 @@
 export function Training() {
   return (
-    <section className="border-b-2 border-black/60 py-16 md:py-20">
+    <section className="border-b-2 border-black/60 py-12 md:py-16">
       <div className="mx-auto max-w-6xl px-5">
         <div className="taped p-8 md:p-12">
           <span className="scoretag scoretag--purple">Train with the coach</span>
