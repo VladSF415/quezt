@@ -3,7 +3,6 @@ import { INSTAGRAM_URL, YOUTUBE_CHANNEL_URL } from "@/lib/site";
 const sponsors = [
   "3rd World Market",
   "Sir Hands Street Food",
-  "Coca-Cola",
   "The Quezt Community",
 ];
 
