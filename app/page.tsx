@@ -8,6 +8,10 @@ import { RegisterForm } from "@/components/RegisterForm";
 import { Training } from "@/components/Training";
 import { SiteFooter } from "@/components/SiteFooter";
 
+// Rendered per-request: the homepage reads the active event from the database,
+// which is only reachable at runtime, not during the build.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const event = await prisma.event.findFirst({ where: { isActive: true } });
 
