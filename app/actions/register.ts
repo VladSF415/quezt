@@ -24,7 +24,8 @@ export async function registerTeam(
   await prisma.registration.create({
     data: {
       eventId: event.id,
-      teamName: data.teamName,
+      format: data.format,
+      teamName: data.teamName ?? null,
       players: data.players,
       division: data.division,
       cellPhone: data.cellPhone,

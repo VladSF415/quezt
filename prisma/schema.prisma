@@ -23,8 +23,9 @@ model Registration {
   id                  String   @id @default(cuid())
   eventId             String
   event               Event    @relation(fields: [eventId], references: [id])
-  teamName            String
-  players             Json // [{first,last} x4]
+  format              String   @default("3on3") // "3on3" | "1v1" | "3point"
+  teamName            String? // required for 3on3; optional nickname/tag for solo
+  players             Json // [{first,last}] — 4 for 3on3, 1 for solo
   division            String
   cellPhone           String?
   email               String
