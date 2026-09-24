@@ -4,6 +4,7 @@ const sponsors = [
   "3rd World Market",
   "Sir Hands Street Food",
   "Coach TaSheena",
+  "Hannibal",
   "The Quezt Community",
 ];
 
@@ -39,6 +40,14 @@ export function SiteFooter() {
               )}
               <a href="mailto:info@quezt.org" className="scoretag scoretag--purple py-2">
                 info@quezt.org
+              </a>
+              <a
+                href="https://queztsports.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="scoretag scoretag--purple py-2"
+              >
+                queztsports.com
               </a>
             </div>
           </div>
