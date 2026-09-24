@@ -4,7 +4,7 @@ const sponsors = [
   "3rd World Market",
   "Sir Hands Street Food",
   "Coach TaSheena",
-  "Hannibal",
+  "Hannibal Thompson",
   "The Quezt Community",
 ];
 
