@@ -38,4 +38,42 @@ describe("buildPayload", () => {
     expect(payload.volunteerScoreboard).toBe(false);
     expect(payload.liabilityAgreed).toBe(true);
   });
+
+  it("defaults format to 3on3 with four players", () => {
+    const payload = buildPayload(fd({ email: "c@example.com" })) as {
+      format: string;
+      players: unknown[];
+    };
+    expect(payload.format).toBe("3on3");
+    expect(payload.players).toHaveLength(4);
+  });
+
+  it("reads a solo contest as one player and keeps the nickname", () => {
+    const payload = buildPayload(
+      fd({
+        format: "1v1",
+        player1First: "Solo",
+        player1Last: "Player",
+        teamName: "Sniper",
+        division: "16U",
+        email: "s@example.com",
+        liabilityAgreed: "on",
+      })
+    ) as {
+      format: string;
+      players: { first: string; last: string }[];
+      teamName?: string;
+    };
+    expect(payload.format).toBe("1v1");
+    expect(payload.players).toHaveLength(1);
+    expect(payload.players[0]).toEqual({ first: "Solo", last: "Player" });
+    expect(payload.teamName).toBe("Sniper");
+  });
+
+  it("falls back to 3on3 on an unknown format value", () => {
+    const payload = buildPayload(fd({ format: "horse" })) as {
+      format: string;
+    };
+    expect(payload.format).toBe("3on3");
+  });
 });

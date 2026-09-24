@@ -1,4 +1,4 @@
-import type { RegistrationInput } from "@/lib/registration-schema";
+import { FORMAT_META, type RegistrationInput } from "@/lib/registration-schema";
 
 type NotificationData = RegistrationInput & { eventName: string };
 
@@ -14,6 +14,16 @@ function esc(s: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
+}
+
+// A display name for the entry: the team name for 3on3, otherwise the player's
+// name (with their optional nickname/tag if they gave one).
+function entryName(reg: NotificationData): string {
+  const meta = FORMAT_META[reg.format];
+  if (!meta.solo) return reg.teamName || "Team";
+  const p = reg.players[0];
+  const player = p ? `${p.first} ${p.last}`.trim() : "Player";
+  return reg.teamName ? `${player} (${reg.teamName})` : player;
 }
 
 function tag(label: string, bg: string, color: string): string {
@@ -32,6 +42,9 @@ function row(label: string, value: string): string {
 }
 
 export function renderCoachNotificationHtml(reg: NotificationData): string {
+  const meta = FORMAT_META[reg.format];
+  const name = entryName(reg);
+  const nameLabel = meta.solo ? "Player" : "Team";
   const players = reg.players
     .map(
       (p) =>
@@ -60,7 +73,7 @@ export function renderCoachNotificationHtml(reg: NotificationData): string {
             <td style="background:${COURT};padding:28px 32px;">
               ${tag("Quezt Sports Association", GOLD, COURT)}
               <div style="font-family:'Arial Black',Arial,sans-serif;font-size:30px;line-height:1.05;color:${CHALK};text-transform:uppercase;font-weight:900;margin-top:16px;">
-                New team<br><span style="color:${GOLD};">registered</span>
+                New ${meta.solo ? "entry" : "team"}<br><span style="color:${GOLD};">registered</span>
               </div>
               <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#b9b9c4;margin-top:8px;">
                 ${esc(reg.eventName)}
@@ -75,21 +88,22 @@ export function renderCoachNotificationHtml(reg: NotificationData): string {
           <tr>
             <td style="background:${CHALK};padding:28px 32px;">
               <div style="margin-bottom:18px;">
-                ${tag(esc(reg.teamName), PURPLE, CHALK)}
+                ${tag(meta.label, PURPLE, CHALK)}
                 ${tag(esc(reg.division), GOLD, COURT)}
               </div>
 
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                ${row("Team", esc(reg.teamName))}
+                ${row("Contest", esc(meta.label))}
+                ${row(nameLabel, esc(name))}
                 ${row("Division", esc(reg.division))}
-                ${row("Players", players)}
+                ${row(meta.solo ? "Player" : "Players", players)}
                 ${row("Email", esc(reg.email))}
                 ${row("Phone", esc(reg.cellPhone || "Not provided"))}
                 ${row("Volunteering", esc(volunteer))}
               </table>
 
               <div style="margin-top:24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6b6b6b;">
-                See every team in the coach dashboard.
+                See every entry in the coach dashboard.
               </div>
             </td>
           </tr>
@@ -112,6 +126,7 @@ export function renderCoachNotificationHtml(reg: NotificationData): string {
 }
 
 export function renderCoachNotificationText(reg: NotificationData): string {
+  const meta = FORMAT_META[reg.format];
   const players = reg.players.map((p) => `${p.first} ${p.last}`).join(", ");
   const volunteer =
     [
@@ -121,10 +136,11 @@ export function renderCoachNotificationText(reg: NotificationData): string {
       .filter(Boolean)
       .join(", ") || "None";
   return (
-    `New team registered for ${reg.eventName}\n\n` +
-    `Team: ${reg.teamName}\n` +
+    `New ${meta.solo ? "entry" : "team"} registered for ${reg.eventName}\n\n` +
+    `Contest: ${meta.label}\n` +
+    `${meta.solo ? "Player" : "Team"}: ${entryName(reg)}\n` +
     `Division: ${reg.division}\n` +
-    `Players: ${players}\n` +
+    `${meta.solo ? "Player" : "Players"}: ${players}\n` +
     `Email: ${reg.email}\n` +
     `Phone: ${reg.cellPhone || "Not provided"}\n` +
     `Volunteering: ${volunteer}\n`
@@ -134,6 +150,8 @@ export function renderCoachNotificationText(reg: NotificationData): string {
 // ---- Confirmation email to the person who registered ----
 
 export function renderRegistrantConfirmationHtml(reg: NotificationData): string {
+  const meta = FORMAT_META[reg.format];
+  const name = entryName(reg);
   const players = reg.players
     .map((p) => `<div style="padding:2px 0;">${esc(p.first)} ${esc(p.last)}</div>`)
     .join("");
@@ -163,18 +181,20 @@ export function renderRegistrantConfirmationHtml(reg: NotificationData): string 
           <tr>
             <td style="background:${CHALK};padding:28px 32px;">
               <p style="font-family:Arial,Helvetica,sans-serif;font-size:16px;color:${COURT};margin:0 0 18px;">
-                Thanks for registering <strong>${esc(reg.teamName)}</strong>. Your spot in the
+                Thanks for registering <strong>${esc(name)}</strong> for the
+                <strong>${esc(meta.label)}</strong>. Your spot in the
                 <strong>${esc(reg.division)}</strong> division is saved. The coach will be in touch
                 with the details before the event.
               </p>
 
               <div style="margin-bottom:6px;">
-                ${tag("Your team", PURPLE, CHALK)}
+                ${tag(meta.solo ? "Your entry" : "Your team", PURPLE, CHALK)}
               </div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                ${row("Team", esc(reg.teamName))}
+                ${row("Contest", esc(meta.label))}
+                ${row(meta.solo ? "Player" : "Team", esc(name))}
                 ${row("Division", esc(reg.division))}
-                ${row("Players", players)}
+                ${row(meta.solo ? "Player" : "Players", players)}
               </table>
 
               <div style="margin-top:24px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6b6b6b;">
@@ -200,14 +220,16 @@ export function renderRegistrantConfirmationHtml(reg: NotificationData): string 
 }
 
 export function renderRegistrantConfirmationText(reg: NotificationData): string {
+  const meta = FORMAT_META[reg.format];
   const players = reg.players.map((p) => `${p.first} ${p.last}`).join(", ");
   return (
-    `You're in. Thanks for registering ${reg.teamName} for ${reg.eventName}.\n\n` +
+    `You're in. Thanks for registering ${entryName(reg)} for the ${meta.label} at ${reg.eventName}.\n\n` +
     `Your spot in the ${reg.division} division is saved. The coach will be in ` +
     `touch with the details before the event.\n\n` +
-    `Team: ${reg.teamName}\n` +
+    `Contest: ${meta.label}\n` +
+    `${meta.solo ? "Player" : "Team"}: ${entryName(reg)}\n` +
     `Division: ${reg.division}\n` +
-    `Players: ${players}\n\n` +
+    `${meta.solo ? "Player" : "Players"}: ${players}\n\n` +
     `See you on the court.\n`
   );
 }

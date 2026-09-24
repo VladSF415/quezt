@@ -31,6 +31,7 @@ export default async function AdminDashboard() {
 
   const rows: Row[] = registrations.map((r) => ({
     id: r.id,
+    format: r.format,
     teamName: r.teamName,
     division: r.division,
     players: r.players as { first: string; last: string }[],

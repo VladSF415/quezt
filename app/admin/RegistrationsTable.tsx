@@ -2,10 +2,12 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { togglePaid } from "./actions";
+import { FORMAT_META, type Format } from "@/lib/registration-schema";
 
 export type Row = {
   id: string;
-  teamName: string;
+  format: string;
+  teamName: string | null;
   division: string;
   players: { first: string; last: string }[];
   email: string;
@@ -15,6 +17,26 @@ export type Row = {
   paid: boolean;
   createdAt: string;
 };
+
+function contestMeta(format: string) {
+  return (
+    FORMAT_META[format as Format] ?? {
+      label: format,
+      tag: format,
+      solo: false,
+      players: 4,
+    }
+  );
+}
+
+// The primary name to show: the team name for 3on3, otherwise the solo
+// player's name (their nickname/tag rides along under it when given).
+function displayName(r: Row): string {
+  const meta = contestMeta(r.format);
+  if (!meta.solo) return r.teamName || "Unnamed team";
+  const p = r.players[0];
+  return p ? `${p.first} ${p.last}`.trim() : "Player";
+}
 
 function PaidButton({ row }: { row: Row }) {
   const [pending, start] = useTransition();
@@ -39,7 +61,8 @@ export function RegistrationsTable({ rows }: { rows: Row[] }) {
     if (!needle) return rows;
     return rows.filter((r) => {
       const hay = [
-        r.teamName,
+        r.teamName ?? "",
+        contestMeta(r.format).label,
         r.division,
         r.email,
         r.players.map((p) => `${p.first} ${p.last}`).join(" "),
@@ -66,29 +89,32 @@ export function RegistrationsTable({ rows }: { rows: Row[] }) {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search team, player, division, email"
+          placeholder="Search name, contest, division, email"
           className="w-full max-w-sm border-2 border-court bg-white px-3 py-2 text-court placeholder-court/40"
         />
         <span className="text-chalk/70">
-          {filtered.length} team{filtered.length === 1 ? "" : "s"}
+          {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
         </span>
       </div>
 
       {byDivision.length === 0 && (
-        <p className="text-chalk/70">No teams yet.</p>
+        <p className="text-chalk/70">No entries yet.</p>
       )}
 
-      {byDivision.map(([division, teams]) => (
+      {byDivision.map(([division, entries]) => (
         <div key={division} className="mb-8">
           <div className="mb-3 flex items-center gap-3">
             <span className="scoretag">{division}</span>
-            <span className="text-chalk/60">{teams.length} team{teams.length === 1 ? "" : "s"}</span>
+            <span className="text-chalk/60">
+              {entries.length} {entries.length === 1 ? "entry" : "entries"}
+            </span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse bg-white text-court">
+            <table className="w-full min-w-[760px] border-collapse bg-white text-court">
               <thead>
                 <tr className="border-b-2 border-court text-left text-sm">
-                  <th className="p-3">Team</th>
+                  <th className="p-3">Contest</th>
+                  <th className="p-3">Name</th>
                   <th className="p-3">Players</th>
                   <th className="p-3">Contact</th>
                   <th className="p-3">Volunteer</th>
@@ -96,32 +122,50 @@ export function RegistrationsTable({ rows }: { rows: Row[] }) {
                 </tr>
               </thead>
               <tbody>
-                {teams.map((r) => (
-                  <tr key={r.id} className="border-b border-court/15 align-top">
-                    <td className="p-3 font-semibold">{r.teamName}</td>
-                    <td className="p-3 text-sm">
-                      {r.players.map((p, i) => (
-                        <div key={i}>
-                          {p.first} {p.last}
-                        </div>
-                      ))}
-                    </td>
-                    <td className="p-3 text-sm">
-                      <div>{r.email}</div>
-                      {r.cellPhone && <div className="text-court/60">{r.cellPhone}</div>}
-                    </td>
-                    <td className="p-3 text-sm">
-                      {r.volunteerReferee && <div>Referee</div>}
-                      {r.volunteerScoreboard && <div>Scoreboard</div>}
-                      {!r.volunteerReferee && !r.volunteerScoreboard && (
-                        <span className="text-court/40">None</span>
-                      )}
-                    </td>
-                    <td className="p-3">
-                      <PaidButton row={r} />
-                    </td>
-                  </tr>
-                ))}
+                {entries.map((r) => {
+                  const meta = contestMeta(r.format);
+                  return (
+                    <tr
+                      key={r.id}
+                      className="border-b border-court/15 align-top"
+                    >
+                      <td className="p-3 text-sm font-semibold">
+                        {meta.label}
+                      </td>
+                      <td className="p-3 font-semibold">
+                        {displayName(r)}
+                        {meta.solo && r.teamName && (
+                          <div className="text-xs font-normal text-court/60">
+                            &ldquo;{r.teamName}&rdquo;
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-3 text-sm">
+                        {r.players.map((p, i) => (
+                          <div key={i}>
+                            {p.first} {p.last}
+                          </div>
+                        ))}
+                      </td>
+                      <td className="p-3 text-sm">
+                        <div>{r.email}</div>
+                        {r.cellPhone && (
+                          <div className="text-court/60">{r.cellPhone}</div>
+                        )}
+                      </td>
+                      <td className="p-3 text-sm">
+                        {r.volunteerReferee && <div>Referee</div>}
+                        {r.volunteerScoreboard && <div>Scoreboard</div>}
+                        {!r.volunteerReferee && !r.volunteerScoreboard && (
+                          <span className="text-court/40">None</span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <PaidButton row={r} />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
