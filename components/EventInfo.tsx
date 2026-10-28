@@ -1,4 +1,10 @@
 import Image from "next/image";
+import {
+  CONTACT_EMAIL,
+  CONTACT_NAME,
+  CONTACT_PHONE,
+  telHref,
+} from "@/lib/site";
 
 type EventInfoProps = {
   name: string;
@@ -19,6 +25,23 @@ function formatDate(d: Date): string {
   });
 }
 
+// "Margaret Hayward Playground, 1016 Laguna St, San Francisco, CA 94115"
+// shows the place big, then the street and the city on their own lines.
+function splitLocation(location: string): { place: string; lines: string[] } {
+  const [place, ...rest] = location.split(",").map((s) => s.trim());
+  if (rest.length >= 3) {
+    return { place, lines: [rest[0], rest.slice(1).join(", ")] };
+  }
+  return { place, lines: rest.length ? [rest.join(", ")] : [] };
+}
+
+function directionsHref(location: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
+const contactLink =
+  "font-semibold text-purple underline underline-offset-4 hover:text-red";
+
 export function EventInfo({
   name,
   date,
@@ -27,6 +50,9 @@ export function EventInfo({
   prizes,
   registrationDeadline,
 }: EventInfoProps) {
+  const { place, lines } = splitLocation(location);
+  const confirmed = !location.startsWith("TBD");
+
   return (
     <section id="event" className="border-b-2 border-black/60 py-12 md:py-16">
       <div className="mx-auto max-w-6xl px-5">
@@ -62,11 +88,31 @@ export function EventInfo({
               <div className="taped p-6 pt-8">
                 <span className="scoretag">Where</span>
                 <p className="font-display mt-3 text-2xl text-court">
-                  {location}
+                  {place}
                 </p>
-                <p className="mt-1 text-court/80">
-                  Location details go out to registered teams.
-                </p>
+                {lines.length > 0 && (
+                  <p className="mt-1 text-court/80">
+                    {lines.map((line) => (
+                      <span key={line} className="block">
+                        {line}
+                      </span>
+                    ))}
+                  </p>
+                )}
+                {confirmed ? (
+                  <a
+                    href={directionsHref(location)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="scoretag scoretag--purple mt-4 py-2"
+                  >
+                    Get directions
+                  </a>
+                ) : (
+                  <p className="mt-1 text-court/80">
+                    Location details go out to registered teams.
+                  </p>
+                )}
               </div>
             </div>
             <div className="taped p-6 pt-8">
@@ -100,6 +146,26 @@ export function EventInfo({
                   </span>
                 </p>
               )}
+            </div>
+            <div className="taped p-6 pt-8">
+              <span className="scoretag">Questions?</span>
+              <p className="font-display mt-3 text-2xl text-court">
+                {CONTACT_NAME}
+              </p>
+              <div className="mt-2 flex flex-col items-start gap-1">
+                <a
+                  href={telHref(CONTACT_PHONE)}
+                  className={`${contactLink} whitespace-nowrap`}
+                >
+                  {CONTACT_PHONE}
+                </a>
+                <a
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  className={`${contactLink} max-w-full break-words`}
+                >
+                  {CONTACT_EMAIL}
+                </a>
+              </div>
             </div>
           </div>
         </div>

@@ -1,4 +1,11 @@
-import { INSTAGRAM_URL, YOUTUBE_CHANNEL_URL } from "@/lib/site";
+import {
+  CONTACT_EMAIL,
+  CONTACT_NAME,
+  CONTACT_PHONE,
+  INSTAGRAM_URL,
+  YOUTUBE_CHANNEL_URL,
+  telHref,
+} from "@/lib/site";
 
 const sponsors = [
   "3rd World Market",
@@ -19,7 +26,25 @@ export function SiteFooter() {
               Community basketball in San Francisco. Empowering youth, building
               leaders, strengthening communities.
             </p>
-            <div className="mt-5 flex flex-wrap gap-3">
+            <div className="mt-6">
+              <p className="scoretag">Contact</p>
+              <p className="mt-3 text-lg text-chalk">{CONTACT_NAME}</p>
+              <p className="mt-1 flex flex-col gap-1 text-chalk/80">
+                <a
+                  href={telHref(CONTACT_PHONE)}
+                  className="self-start underline underline-offset-4 hover:text-gold"
+                >
+                  {CONTACT_PHONE}
+                </a>
+                <a
+                  href={`mailto:${CONTACT_EMAIL}`}
+                  className="self-start break-all underline underline-offset-4 hover:text-gold"
+                >
+                  {CONTACT_EMAIL}
+                </a>
+              </p>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
               <a
                 href={INSTAGRAM_URL}
                 target="_blank"
@@ -38,9 +63,6 @@ export function SiteFooter() {
                   YouTube
                 </a>
               )}
-              <a href="mailto:info@quezt.org" className="scoretag scoretag--purple py-2">
-                info@quezt.org
-              </a>
               <a
                 href="https://queztsports.com"
                 target="_blank"
