@@ -22,9 +22,23 @@ async function seedOwner() {
   console.log(`[seed] owner ensured: ${email}`);
 }
 
+// The confirmed venue (the coach, Oct 27 2026). An active event still on the
+// "TBD" placeholder moves here on the next deploy; a location set any other
+// way is left alone.
+const VENUE =
+  "Margaret Hayward Playground, 1016 Laguna St, San Francisco, CA 94115";
+
 async function seedEvent() {
   const existing = await prisma.event.findFirst({ where: { isActive: true } });
   if (existing) {
+    if (existing.location.startsWith("TBD")) {
+      await prisma.event.update({
+        where: { id: existing.id },
+        data: { location: VENUE },
+      });
+      console.log("[seed] active event moved to the confirmed venue");
+      return;
+    }
     console.log("[seed] active event already exists, skipping");
     return;
   }
@@ -32,7 +46,7 @@ async function seedEvent() {
     data: {
       name: "Quezt 3 on 3 Community Basketball Event",
       date: new Date("2026-11-24T09:00:00-08:00"),
-      location: "TBD, San Francisco, CA",
+      location: VENUE,
       divisions: ["8U", "10U", "12U", "14U", "16U", "18U", "18UP"],
       prizes:
         "$300 cash prize to all age group winners. Turkey and shoes giveaway.",

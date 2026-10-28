@@ -18,3 +18,13 @@ export const YOUTUBE_CHANNEL_URL =
 
 // Instagram handle + URL.
 export const INSTAGRAM_URL = "https://www.instagram.com/quezsf/";
+
+// Who to reach with questions (shown in the event section and the footer).
+export const CONTACT_NAME = "Marquez Shaw";
+export const CONTACT_PHONE = "(415) 713-2256";
+export const CONTACT_EMAIL = "queztbasketball@gmail.com";
+
+// tel: link for a US number written any way, e.g. "(415) 713-2256".
+export function telHref(phone: string): string {
+  return `tel:+1${phone.replace(/\D/g, "").slice(-10)}`;
+}
