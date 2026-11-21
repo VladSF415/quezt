@@ -70,4 +70,8 @@ describe("EventInfo", () => {
     expect([...at].sort((a, b) => a - b)).toEqual(at);
     expect(html.match(/>Staff</g)?.length).toBe(2);
   });
+
+  it("links to the rules for all three contests", () => {
+    expect(html).toContain('href="#rules"');
+  });
 });

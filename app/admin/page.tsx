@@ -60,6 +60,9 @@ export default async function AdminDashboard() {
             <span className="hidden text-sm text-chalk/60 sm:inline">
               {user.name || user.email}
             </span>
+            <a href="/admin/brackets" className="scoretag scoretag--purple py-2">
+              Brackets
+            </a>
             <a href="/api/admin/export" className="scoretag scoretag--purple py-2">
               Download CSV
             </a>

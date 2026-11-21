@@ -166,6 +166,9 @@ export function EventInfo({
                   </li>
                 ))}
               </ol>
+              <a href="#rules" className="scoretag mt-5 py-2">
+                Read the rules
+              </a>
             </div>
             <div className="taped p-6 pt-8">
               <span className="scoretag">Prizes</span>

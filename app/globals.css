@@ -140,3 +140,30 @@ select:focus-visible {
   outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
+
+/* Printing the coach's brackets: black on white, no buttons or form, each contest on its own page,
+   and a game box or table never split across pages. */
+@media print {
+  body {
+    background: #fff !important;
+    background-image: none !important;
+    color: #111;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-sheet .scoretag {
+    box-shadow: none;
+  }
+  .print-sheet .sheet-contest + .sheet-contest {
+    break-before: page;
+  }
+  .print-sheet .sheet-box,
+  .print-sheet tr {
+    break-inside: avoid;
+  }
+  .print-sheet h2,
+  .print-sheet h3 {
+    break-after: avoid;
+  }
+}
