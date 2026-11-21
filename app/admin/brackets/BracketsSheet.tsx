@@ -16,8 +16,13 @@ type BracketPart = { groups: Group[]; schedule: ReturnType<typeof scheduleBracke
 type ShooterPart = { groups: Group[]; schedule: ReturnType<typeof scheduleShooters>; opts: ShooterOptions };
 
 export type BracketsSheetProps = {
+  // "public" is the /brackets page: short names, no rosters, no unpaid tags, no settings form.
+  view?: "coach" | "public";
   eventName: string | null;
   asOf: string;
+  savedAt?: string | null;
+  justSaved?: boolean;
+  saveAction?: (fd: FormData) => Promise<void>;
   threeOnThree: BracketPart;
   oneOnOne: BracketPart;
   threePoint: ShooterPart;
@@ -25,7 +30,15 @@ export type BracketsSheetProps = {
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-function EntrantLine({ e, showPaid }: { e: Entrant; showPaid: boolean }) {
+function EntrantLine({ e, showPaid, pub }: { e: Entrant; showPaid: boolean; pub: boolean }) {
+  if (pub) {
+    return (
+      <span className="block">
+        <span className="text-court/50">#{e.seed} </span>
+        <span className="font-semibold">{e.shortName}</span>
+      </span>
+    );
+  }
   return (
     <span className="block">
       <span className="text-court/50">#{e.seed} </span>
@@ -38,13 +51,13 @@ function EntrantLine({ e, showPaid }: { e: Entrant; showPaid: boolean }) {
   );
 }
 
-function SideLine({ s, showPaid }: { s: Side; showPaid: boolean }) {
-  if (s.kind === "entrant") return <EntrantLine e={s.entrant} showPaid={showPaid} />;
+function SideLine({ s, showPaid, pub }: { s: Side; showPaid: boolean; pub: boolean }) {
+  if (s.kind === "entrant") return <EntrantLine e={s.entrant} showPaid={showPaid} pub={pub} />;
   if (s.kind === "winner") return <span className="block text-court/70">Winner of G{s.game}</span>;
   return <span className="block text-court/40">Bye</span>;
 }
 
-function GameBox({ g, showPaid }: { g: Slot; showPaid: boolean }) {
+function GameBox({ g, showPaid, pub }: { g: Slot; showPaid: boolean; pub: boolean }) {
   return (
     <div className="sheet-box border-2 border-court bg-white p-2 text-sm text-court">
       <p className="mb-1 flex flex-wrap justify-between gap-x-2 text-xs font-semibold uppercase tracking-wide text-court/70">
@@ -53,14 +66,14 @@ function GameBox({ g, showPaid }: { g: Slot; showPaid: boolean }) {
           {formatTime(g.start)} · Court {g.court}
         </span>
       </p>
-      <SideLine s={g.a} showPaid={showPaid} />
+      <SideLine s={g.a} showPaid={showPaid} pub={pub} />
       <span className="my-0.5 block text-xs text-court/40">vs</span>
-      <SideLine s={g.b} showPaid={showPaid} />
+      <SideLine s={g.b} showPaid={showPaid} pub={pub} />
     </div>
   );
 }
 
-function BracketContest({ title, part, showPaid, minutesLine }: { title: string; part: BracketPart; showPaid: boolean; minutesLine: string }) {
+function BracketContest({ title, part, showPaid, minutesLine, pub }: { title: string; part: BracketPart; showPaid: boolean; minutesLine: string; pub: boolean }) {
   const { groups, schedule, opts } = part;
   if (!groups.length) {
     return (
@@ -78,18 +91,23 @@ function BracketContest({ title, part, showPaid, minutesLine }: { title: string;
         {minutesLine} Starts {formatTime(opts.start)}
         {opts.finalsAt !== null ? `, finals at ${formatTime(opts.finalsAt)}` : ""}, ends about {formatTime(schedule.ends)}.
       </p>
-      {schedule.overlap && (
+      {schedule.overlap && !pub && (
         <p className="mt-2 border-2 border-red bg-white p-2 text-sm font-semibold text-red">
           The early rounds run past the finals time, so the finals start at{" "}
           {formatTime(Math.min(...schedule.slots.filter((s) => s.final).map((s) => s.start)))}. Add a court or shorten the games to keep the finals on time.
         </p>
       )}
-      {schedule.alone.length > 0 && (
-        <p className="mt-2 border-2 border-gold bg-white p-2 text-sm text-court">
-          Only one sign-up, so no bracket yet:{" "}
-          {schedule.alone.map((g) => `${g.label} (${g.entrants[0].name})`).join(", ")}. Move them to the next age group or wait for more sign-ups.
-        </p>
-      )}
+      {schedule.alone.length > 0 &&
+        (pub ? (
+          <p className="mt-2 border-2 border-gold bg-white p-2 text-sm text-court">
+            Waiting for more sign-ups: {schedule.alone.map((g) => g.label).join(", ")}.
+          </p>
+        ) : (
+          <p className="mt-2 border-2 border-gold bg-white p-2 text-sm text-court">
+            Only one sign-up, so no bracket yet:{" "}
+            {schedule.alone.map((g) => `${g.label} (${g.entrants[0].name})`).join(", ")}. Move them to the next age group or wait for more sign-ups.
+          </p>
+        ))}
 
       {played.map((group) => {
         const mine = schedule.slots.filter((s) => s.group.key === group.key);
@@ -97,7 +115,7 @@ function BracketContest({ title, part, showPaid, minutesLine }: { title: string;
         return (
           <div key={group.key} className="sheet-group mt-6">
             <h3 className="font-display text-2xl text-gold print:text-court">
-              {group.label} · {plural(group.entrants.length, showPaid ? "team" : "player", showPaid ? "teams" : "players")}
+              {group.label} · {plural(group.entrants.length, group.format === "3on3" ? "team" : "player", group.format === "3on3" ? "teams" : "players")}
             </h3>
             {/* A big bracket scrolls sideways inside this box on small screens; on paper the
                 columns shrink to the page width. */}
@@ -109,7 +127,7 @@ function BracketContest({ title, part, showPaid, minutesLine }: { title: string;
                     {mine
                       .filter((s) => s.roundName === r)
                       .map((g) => (
-                        <GameBox key={g.game} g={g} showPaid={showPaid} />
+                        <GameBox key={g.game} g={g} showPaid={showPaid} pub={pub} />
                       ))}
                   </div>
                 ))}
@@ -141,7 +159,7 @@ function BracketContest({ title, part, showPaid, minutesLine }: { title: string;
                 <td className="p-2">{g.group.label}</td>
                 <td className="p-2">{g.roundName}</td>
                 <td className="p-2">
-                  {[g.a, g.b].map((s) => (s.kind === "entrant" ? s.entrant.name : s.kind === "winner" ? `Winner of G${s.game}` : "Bye")).join(" vs ")}
+                  {[g.a, g.b].map((s) => (s.kind === "entrant" ? (pub ? s.entrant.shortName : s.entrant.name) : s.kind === "winner" ? `Winner of G${s.game}` : "Bye")).join(" vs ")}
                 </td>
               </tr>
             ))}
@@ -152,7 +170,7 @@ function BracketContest({ title, part, showPaid, minutesLine }: { title: string;
   );
 }
 
-function ShooterContest({ part }: { part: ShooterPart }) {
+function ShooterContest({ part, pub }: { part: ShooterPart; pub: boolean }) {
   const { groups, schedule, opts } = part;
   return (
     <section className="sheet-contest mt-10">
@@ -178,7 +196,7 @@ function ShooterContest({ part }: { part: ShooterPart }) {
                     <th className="p-2">Time</th>
                     {opts.stations > 1 && <th className="p-2">Hoop</th>}
                     <th className="p-2">Shooter</th>
-                    <th className="w-24 p-2">Score</th>
+                    {!pub && <th className="w-24 p-2">Score</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -190,12 +208,14 @@ function ShooterContest({ part }: { part: ShooterPart }) {
                         <td className="p-2 whitespace-nowrap">{formatTime(r.start)}</td>
                         {opts.stations > 1 && <td className="p-2">{r.station}</td>}
                         <td className="p-2">
-                          <span className="font-semibold">{r.entrant.name}</span>
-                          {r.entrant.detail && <span className="ml-1 text-court/60">({r.entrant.detail})</span>}
+                          <span className="font-semibold">{pub ? r.entrant.shortName : r.entrant.name}</span>
+                          {!pub && r.entrant.detail && <span className="ml-1 text-court/60">({r.entrant.detail})</span>}
                         </td>
-                        <td className="p-2">
-                          <span className="block h-5 border-b border-court/40" />
-                        </td>
+                        {!pub && (
+                          <td className="p-2">
+                            <span className="block h-5 border-b border-court/40" />
+                          </td>
+                        )}
                       </tr>
                     ))}
                 </tbody>
@@ -217,7 +237,7 @@ function Field({ label, name, value, type = "number", min, max }: { label: strin
   );
 }
 
-function Settings({ threeOnThree, oneOnOne, threePoint }: Pick<BracketsSheetProps, "threeOnThree" | "oneOnOne" | "threePoint">) {
+function Settings({ threeOnThree, oneOnOne, threePoint, savedAt, justSaved, saveAction }: Pick<BracketsSheetProps, "threeOnThree" | "oneOnOne" | "threePoint" | "savedAt" | "justSaved" | "saveAction">) {
   const a = threeOnThree.opts;
   const b = oneOnOne.opts;
   const c = threePoint.opts;
@@ -249,46 +269,61 @@ function Settings({ threeOnThree, oneOnOne, threePoint }: Pick<BracketsSheetProp
           <Field label="Minutes per shooter" name="mp" value={String(c.minutesEach)} min={1} max={60} />
         </fieldset>
       </div>
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <button type="submit" className="scoretag scoretag--purple py-2">Update</button>
-        <a href="/admin/brackets" className="scoretag py-2">Back to the coach&apos;s schedule</a>
+        {saveAction && (
+          <button type="submit" formAction={saveAction} formMethod="post" className="scoretag scoretag--purple py-2">
+            Save for the public page
+          </button>
+        )}
+        <a href="/admin/brackets" className="scoretag py-2">Back to the saved times</a>
       </div>
+      <p className="mt-3 text-sm text-court/70">
+        {justSaved ? "Saved. " : ""}
+        The public page (<a href="/brackets" className="underline">/brackets</a>) shows{" "}
+        {savedAt ? `the times saved ${savedAt}` : "the coach's schedule until you save"}.
+      </p>
     </form>
   );
 }
 
 export function BracketsSheet(props: BracketsSheetProps) {
   const { eventName, asOf, threeOnThree, oneOnOne, threePoint } = props;
+  const pub = props.view === "public";
   return (
     <div className="print-sheet">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <span className="scoretag">Coach dashboard</span>
+          <span className="scoretag">{pub ? "Quezt Sports Association" : "Coach dashboard"}</span>
           <h1 className="font-display mt-3 text-4xl text-chalk sm:text-5xl print:text-court">Brackets</h1>
           {eventName && <p className="mt-1 text-chalk/70 print:text-court/70">{eventName}</p>}
           <p className="mt-1 text-sm text-chalk/60 print:text-court/60">
-            Sign-ups as of {asOf}. Seeds follow sign-up order, and byes go to the earliest sign-ups.
+            {pub ? "Updated" : "Sign-ups as of"} {asOf}. Seeds follow sign-up order, and byes go to the earliest sign-ups.
           </p>
         </div>
         <div className="no-print flex items-center gap-3">
-          <a href="/admin" className="scoretag py-2">Back to teams</a>
+          <a href={pub ? "/#event" : "/admin"} className="scoretag py-2">{pub ? "Back to the event" : "Back to teams"}</a>
           <PrintButton />
         </div>
       </div>
-      <Settings threeOnThree={threeOnThree} oneOnOne={oneOnOne} threePoint={threePoint} />
+      {!pub && (
+        <Settings threeOnThree={threeOnThree} oneOnOne={oneOnOne} threePoint={threePoint} savedAt={props.savedAt} justSaved={props.justSaved} saveAction={props.saveAction} />
+      )}
       <BracketContest
         title="3 on 3 Tournament"
         part={threeOnThree}
-        showPaid
+        showPaid={!pub}
+        pub={pub}
         minutesLine={`${plural(threeOnThree.opts.courts, "court", "courts")}, ${threeOnThree.opts.gameMinutes}-minute games, ${threeOnThree.opts.finalMinutes}-minute finals. Teams check in 15 minutes before their game; 10 minutes late is a 15-0 forfeit.`}
       />
       <BracketContest
         title="1v1 King of the Court"
         part={oneOnOne}
         showPaid={false}
+        pub={pub}
         minutesLine={`${plural(oneOnOne.opts.courts, "court", "courts")}, ${oneOnOne.opts.gameMinutes}-minute games (first to 24 by 2s and 3s).`}
       />
-      <ShooterContest part={threePoint} />
+      <ShooterContest part={threePoint} pub={pub} />
     </div>
   );
 }

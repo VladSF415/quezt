@@ -10,6 +10,7 @@ import { RegisterForm } from "@/components/RegisterForm";
 import { Training } from "@/components/Training";
 import { ShareQR } from "@/components/ShareQR";
 import { SiteFooter } from "@/components/SiteFooter";
+import { loadPublicBrackets } from "@/lib/public-brackets";
 
 // Dynamic so the build never touches the DB (only reachable at runtime), but
 // the event query itself is cached for 5 minutes via unstable_cache, so
@@ -21,6 +22,13 @@ const getActiveEventCached = unstable_cache(
   ["active-event"],
   { revalidate: 300, tags: ["active-event"] }
 );
+
+// The age divisions open to each group's games (short names only). Cached for a minute; the coach's
+// "Save for the public page" also refreshes it.
+const getBracketsCached = unstable_cache(loadPublicBrackets, ["public-brackets"], {
+  revalidate: 60,
+  tags: ["public-brackets"],
+});
 
 // unstable_cache serializes to JSON, so Date fields come back as strings.
 // Rehydrate them to Date objects for the components.
@@ -37,7 +45,7 @@ async function getActiveEvent() {
 }
 
 export default async function Home() {
-  const event = await getActiveEvent();
+  const [event, bracketData] = await Promise.all([getActiveEvent(), getBracketsCached()]);
 
   return (
     <main className="flex-1">
@@ -53,6 +61,7 @@ export default async function Home() {
           divisions={event.divisions}
           prizes={event.prizes}
           registrationDeadline={event.registrationDeadline}
+          brackets={bracketData?.brackets ?? null}
         />
       )}
       <Rules />

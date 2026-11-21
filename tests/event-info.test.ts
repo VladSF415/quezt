@@ -10,6 +10,7 @@ vi.mock("next/image", () => ({
 
 import { EventInfo } from "@/components/EventInfo";
 import { RAIN_LOCATION, SCHEDULE } from "@/lib/site";
+import { publicBrackets } from "@/lib/brackets";
 
 const props = {
   name: "Quezt 3 on 3 Community Basketball Event",
@@ -73,5 +74,68 @@ describe("EventInfo", () => {
 
   it("links to the rules for all three contests", () => {
     expect(html).toContain('href="#rules"');
+  });
+
+  it("links to the public brackets", () => {
+    expect(html).toContain('href="/brackets"');
+  });
+});
+
+describe("EventInfo, age divisions with the brackets", () => {
+  let k = 0;
+  const reg = (format: string, division: string, first: string, last: string, team?: string) => {
+    k += 1;
+    return {
+      id: `e${k}`,
+      format,
+      teamName: team ?? null,
+      division,
+      players: team ? [{ first: `${first}`, last }, { first: "Roster", last: "Kid" }] : [{ first, last }],
+      paid: false,
+      createdAt: new Date(Date.UTC(2026, 10, 3, 0, k)),
+    };
+  };
+  const brackets = publicBrackets(
+    [
+      reg("3on3", "14U", "Hawk", "Captain", "Hawks"),
+      reg("3on3", "14U", "Owl", "Captain", "Owls"),
+      reg("1v1", "14U", "Ava", "Smith"),
+      reg("1v1", "14U", "Zoe", "Brown"),
+      reg("3point", "12U", "Ana", "Jones"),
+      reg("3on3", "18UP", "Solo", "Team", "Lonely Five"),
+    ],
+    null
+  );
+  const html = renderToStaticMarkup(createElement(EventInfo, { ...props, divisions: ["8U", "12U", "14U", "18UP"], brackets }));
+  const panel = (d: string) => {
+    const i = html.indexOf(`id="division-${d}"`);
+    return html.slice(i, html.indexOf("</details>", i));
+  };
+
+  it("opens each division to its own games and times, short names only", () => {
+    const p14 = panel("14U");
+    expect(p14).toContain("3 on 3");
+    expect(p14).toContain("Hawks vs Owls");
+    expect(p14).toContain("3:30 PM · Court 1 · G");
+    expect(p14).toContain("Final: Hawks vs Owls");
+    expect(p14).toContain("Ava S. vs Zoe B.");
+    expect(p14).toContain("3-Point Contest (14 &amp; under)");
+    expect(p14).toContain("Ana J.");
+    expect(html).not.toContain("Smith");
+    expect(html).not.toContain("Roster");
+    expect(html).not.toContain("Captain");
+  });
+
+  it("says when a division has no games yet", () => {
+    expect(panel("8U")).toContain("No sign-ups yet.");
+    expect(panel("18UP")).toContain("Only one team so far.");
+  });
+
+  it("links to the full brackets page", () => {
+    expect(html).toContain('href="/brackets"');
+  });
+
+  it("keeps players' names out of search snippets", () => {
+    expect(panel("10U") || panel("14U")).toContain("data-nosnippet");
   });
 });

@@ -76,7 +76,7 @@ describe("single elimination", () => {
   });
 
   it("gives byes to the earliest sign-ups and plays n - 1 games", () => {
-    const entrants = ["A", "B", "C", "D", "E"].map((x, i) => ({ id: x, name: x, detail: null, paid: true, seed: i + 1 }));
+    const entrants = ["A", "B", "C", "D", "E"].map((x, i) => ({ id: x, name: x, shortName: x, detail: null, paid: true, seed: i + 1 }));
     const b = buildBracket("g", entrants);
     expect(b.rounds.length).toBe(3);
     const games = b.rounds.flat().filter((m) => !m.bye);
@@ -88,9 +88,9 @@ describe("single elimination", () => {
   });
 
   it("handles one and two entrants", () => {
-    const one = buildBracket("g", [{ id: "A", name: "A", detail: null, paid: true, seed: 1 }]);
+    const one = buildBracket("g", [{ id: "A", name: "A", shortName: "A", detail: null, paid: true, seed: 1 }]);
     expect(one.rounds.flat().filter((m) => !m.bye).length).toBe(0);
-    const two = buildBracket("g", ["A", "B"].map((x, i) => ({ id: x, name: x, detail: null, paid: true, seed: i + 1 })));
+    const two = buildBracket("g", ["A", "B"].map((x, i) => ({ id: x, name: x, shortName: x, detail: null, paid: true, seed: i + 1 })));
     expect(two.rounds.length).toBe(1);
     expect(two.rounds[0][0].bye).toBe(false);
   });
@@ -162,5 +162,35 @@ describe("bracketOptions", () => {
     expect(c.threeOnThree).toEqual({ start: 840, courts: 3, gameMinutes: 12, finalMinutes: 18, finalsAt: null });
     expect(c.oneOnOne.courts).toBe(1);
     expect(c.threePoint.minutesEach).toBe(60);
+  });
+});
+
+describe("public names and saved settings", () => {
+  it("shortens solo players to first name and last initial, keeps team names", async () => {
+    const { groupRegistrations: g } = await import("@/lib/brackets");
+    const out = g([
+      reg("1v1", "12U", "Leo", { players: [{ first: "Leo", last: "Duarte" }] }),
+      reg("3on3", "12U", "Bulls"),
+      reg("3point", "18UP", "Cy", { players: [{ first: "Cy", last: "" }] }),
+    ]);
+    expect(out.find((x) => x.format === "1v1")!.entrants[0].shortName).toBe("Leo D.");
+    expect(out.find((x) => x.format === "3on3")!.entrants[0].shortName).toBe("Bulls");
+    expect(out.find((x) => x.format === "3point")!.entrants[0].shortName).toBe("Cy");
+  });
+
+  it("keeps only the page's own settings, trimmed and short", async () => {
+    const { settingsFromForm, savedParams } = await import("@/lib/brackets");
+    const fd = new FormData();
+    fd.set("s3", " 14:00 ");
+    fd.set("c3", "3");
+    fd.set("fa3", "");
+    fd.set("evil", "x");
+    fd.set("m3", "9".repeat(40));
+    const s = settingsFromForm(fd);
+    expect(s).toEqual({ s3: "14:00", c3: "3", fa3: "", m3: "9999999999" });
+    expect(savedParams({ ...s, savedAt: "2026-11-21T05:00:00.000Z", junk: 5 })).toEqual(s);
+    expect(savedParams(null)).toEqual({});
+    expect(savedParams("nope")).toEqual({});
+    expect(bracketOptions({ ...savedParams(s), s3: "15:00" }).threeOnThree.start).toBe(900);
   });
 });

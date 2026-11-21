@@ -78,3 +78,40 @@ describe("BracketsSheet", () => {
     }
   });
 });
+
+describe("BracketsSheet, public view", () => {
+  const regs = [
+    reg("3on3", "14U", "Hawks", true),
+    reg("3on3", "14U", "Owls"),
+    reg("3on3", "8U", "Lonely Team", true),
+    reg("1v1", "18UP", "Ray"),
+    reg("1v1", "18UP", "Dee"),
+    reg("3point", "12U", "Ana"),
+  ];
+  const groups = groupRegistrations(regs);
+  const opts = bracketOptions({});
+  const pick = (f: string) => groups.filter((g) => g.format === f);
+  const html = renderToStaticMarkup(
+    createElement(BracketsSheet, {
+      view: "public",
+      eventName: "Quezt 3 on 3 Community Basketball Event",
+      asOf: "Sat, Nov 21, 9:00 PM",
+      threeOnThree: { groups: pick("3on3"), schedule: scheduleBrackets(pick("3on3"), opts.threeOnThree), opts: opts.threeOnThree },
+      oneOnOne: { groups: pick("1v1"), schedule: scheduleBrackets(pick("1v1"), opts.oneOnOne), opts: opts.oneOnOne },
+      threePoint: { groups: pick("3point"), schedule: scheduleShooters(pick("3point"), opts.threePoint), opts: opts.threePoint },
+    })
+  );
+
+  it("shows the brackets and times without the coach's tools", () => {
+    expect(html).toContain("Hawks");
+    expect(html).toContain("Ray S.");
+    expect(html).toContain("Ana S.");
+    expect(html).not.toContain("Ray Shooter");
+    expect(html).not.toContain("unpaid");
+    expect(html).not.toContain('name="s3"');
+    expect(html).not.toContain("Coach dashboard");
+    expect(html).not.toContain("HawksA P");
+    expect(html).toContain("Waiting for more sign-ups: 8U.");
+    expect(html).not.toContain("Move them to the next age group");
+  });
+});

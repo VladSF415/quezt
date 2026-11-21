@@ -2,6 +2,8 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { settingsFromForm } from "@/lib/brackets";
 import { prisma } from "@/lib/db";
 import { getSessionUser, SESSION_COOKIE, normalizeEmail } from "@/lib/auth";
 import type { AdminUser } from "@prisma/client";
@@ -57,4 +59,20 @@ export async function removeCoach(id: string): Promise<void> {
   if (target.role === "owner" || target.id === owner.id) return;
   await prisma.adminUser.delete({ where: { id } });
   revalidatePath("/admin");
+}
+
+// "Save for the public page" on /admin/brackets: keep these times and courts on the active event, so
+// the public /brackets page shows the same schedule as the coach's.
+export async function saveBracketSettings(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const event = await prisma.event.findFirst({ where: { isActive: true } });
+  if (!event) throw new Error("No active event");
+  await prisma.event.update({
+    where: { id: event.id },
+    data: { bracketSettings: { ...settingsFromForm(formData), savedAt: new Date().toISOString() } },
+  });
+  revalidatePath("/");
+  revalidatePath("/brackets");
+  revalidatePath("/admin/brackets");
+  redirect("/admin/brackets?saved=1");
 }
