@@ -5,6 +5,7 @@ import { About } from "@/components/About";
 import { Gallery } from "@/components/Gallery";
 import { Videos } from "@/components/Videos";
 import { EventInfo } from "@/components/EventInfo";
+import { Rules } from "@/components/Rules";
 import { RegisterForm } from "@/components/RegisterForm";
 import { Training } from "@/components/Training";
 import { ShareQR } from "@/components/ShareQR";
@@ -54,6 +55,7 @@ export default async function Home() {
           registrationDeadline={event.registrationDeadline}
         />
       )}
+      <Rules />
       <section id="register" className="border-b-2 border-black/60 py-12 md:py-16">
         <div className="mx-auto max-w-3xl px-5">
           <RegisterForm deadline={event?.registrationDeadline ?? null} />
