@@ -7,6 +7,7 @@ import {
   SCHEDULE,
   telHref,
 } from "@/lib/site";
+import { formatTime, THREE_POINT_GROUPS, type PublicBrackets, type Side, type Slot } from "@/lib/brackets";
 
 type EventInfoProps = {
   name: string;
@@ -15,7 +16,77 @@ type EventInfoProps = {
   divisions: string[];
   prizes: string | null;
   registrationDeadline: Date | null;
+  // The public brackets (short names only). With them, each age division opens to its games.
+  brackets?: PublicBrackets | null;
 };
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const sideName = (s: Side) => (s.kind === "entrant" ? s.entrant.shortName : s.kind === "winner" ? `Winner of G${s.game}` : "Bye");
+const gameLine = (s: Slot) =>
+  `${formatTime(s.start)} · Court ${s.court} · G${s.game} ${s.roundName}: ${sideName(s.a)} vs ${sideName(s.b)}`;
+
+// One age division: how many signed up in each contest, and when it opens, that division's games.
+function DivisionPanel({ division, brackets }: { division: string; brackets: PublicBrackets }) {
+  const team = brackets.threeOnThree.groups.find((g) => g.key === `3on3-${division}`);
+  const solo = brackets.oneOnOne.groups.find((g) => g.key === `1v1-${division}`);
+  const shootGroup = THREE_POINT_GROUPS.find((g) => g.divisions.includes(division));
+  const shooters = brackets.threePoint.schedule.rows.filter((r) => r.group.key === `3point-${shootGroup?.key}`);
+  const counts = [
+    team && `3 on 3: ${plural(team.entrants.length, "team", "teams")}`,
+    solo && `1v1: ${plural(solo.entrants.length, "player", "players")}`,
+    shooters.length > 0 && `3-point: ${plural(shooters.length, "shooter", "shooters")}`,
+  ].filter(Boolean);
+  const games = (key: string, slots: Slot[]) => slots.filter((s) => s.group.key === key);
+  const list = (lines: string[]) => (
+    <ul className="mt-1 flex flex-col gap-1 text-sm text-court/90">
+      {lines.map((l) => (
+        <li key={l}>{l}</li>
+      ))}
+    </ul>
+  );
+  return (
+    <details id={`division-${division}`} className="border-2 border-court bg-white">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 [&::-webkit-details-marker]:hidden">
+        <span className="font-display text-lg text-court">{division}</span>
+        <span className="text-sm text-court/70">{counts.length ? counts.join(" · ") : "No sign-ups yet"}</span>
+        <span className="ml-auto text-xs font-semibold uppercase tracking-wide text-purple">Games</span>
+      </summary>
+      {/* Players' first names: kept out of search snippets (data-nosnippet). */}
+      <div data-nosnippet="" className="flex flex-col gap-3 border-t-2 border-court/15 px-3 py-3">
+        {!counts.length && <p className="text-sm text-court/80">No sign-ups yet.</p>}
+        {team && (
+          <div>
+            <p className="font-display text-base text-court">3 on 3</p>
+            {brackets.threeOnThree.schedule.alone.some((g) => g.key === team.key) ? (
+              <p className="mt-1 text-sm text-court/80">Only one team so far.</p>
+            ) : (
+              list(games(team.key, brackets.threeOnThree.schedule.slots).map(gameLine))
+            )}
+          </div>
+        )}
+        {solo && (
+          <div>
+            <p className="font-display text-base text-court">1v1 King of the Court</p>
+            {brackets.oneOnOne.schedule.alone.some((g) => g.key === solo.key) ? (
+              <p className="mt-1 text-sm text-court/80">Only one player so far.</p>
+            ) : (
+              list(games(solo.key, brackets.oneOnOne.schedule.slots).map(gameLine))
+            )}
+          </div>
+        )}
+        {shooters.length > 0 && shootGroup && (
+          <div>
+            <p className="font-display text-base text-court">3-Point Contest ({shootGroup.label})</p>
+            {list(shooters.map((r) => `${formatTime(r.start)} · ${r.entrant.shortName}`))}
+          </div>
+        )}
+        <a href="/brackets" className="text-sm font-semibold text-purple underline underline-offset-4">
+          See all brackets
+        </a>
+      </div>
+    </details>
+  );
+}
 
 function formatDate(d: Date): string {
   return d.toLocaleDateString("en-US", {
@@ -51,6 +122,7 @@ export function EventInfo({
   divisions,
   prizes,
   registrationDeadline,
+  brackets,
 }: EventInfoProps) {
   const { place, lines } = splitLocation(location);
   const confirmed = !location.startsWith("TBD");
@@ -166,9 +238,14 @@ export function EventInfo({
                   </li>
                 ))}
               </ol>
-              <a href="#rules" className="scoretag mt-5 py-2">
-                Read the rules
-              </a>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a href="#rules" className="scoretag py-2">
+                  Read the rules
+                </a>
+                <a href="/brackets" className="scoretag scoretag--purple py-2">
+                  See the brackets
+                </a>
+              </div>
             </div>
             <div className="taped p-6 pt-8">
               <span className="scoretag">Prizes</span>
@@ -178,16 +255,25 @@ export function EventInfo({
             </div>
             <div className="taped p-6 pt-8">
               <span className="scoretag">Age divisions</span>
-              <ul className="mt-4 flex flex-wrap gap-2">
-                {divisions.map((d) => (
-                  <li
-                    key={d}
-                    className="font-display border-2 border-court px-3 py-1 text-lg text-court"
-                  >
-                    {d}
-                  </li>
-                ))}
-              </ul>
+              {brackets ? (
+                <div className="mt-4 flex flex-col gap-2">
+                  <p className="text-sm text-court/70">Tap an age group to see its games and times.</p>
+                  {divisions.map((d) => (
+                    <DivisionPanel key={d} division={d} brackets={brackets} />
+                  ))}
+                </div>
+              ) : (
+                <ul className="mt-4 flex flex-wrap gap-2">
+                  {divisions.map((d) => (
+                    <li
+                      key={d}
+                      className="font-display border-2 border-court px-3 py-1 text-lg text-court"
+                    >
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              )}
               {registrationDeadline && (
                 <p className="mt-4 text-court/80">
                   Registration closes{" "}

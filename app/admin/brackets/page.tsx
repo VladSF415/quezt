@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getSessionUser, SESSION_COOKIE } from "@/lib/auth";
-import { bracketOptions, groupRegistrations, scheduleBrackets, scheduleShooters } from "@/lib/brackets";
+import { bracketOptions, groupRegistrations, savedParams, scheduleBrackets, scheduleShooters } from "@/lib/brackets";
+import { saveBracketSettings } from "../actions";
 import { BracketsSheet } from "./BracketsSheet";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,13 @@ export default async function BracketsPage({
   const groups = groupRegistrations(
     registrations.map((r) => ({ ...r, players: r.players as { first: string; last: string }[] }))
   );
-  const opts = bracketOptions(await searchParams);
+  // The saved settings (what /brackets shows), with any numbers being tried in the link on top.
+  const sp = await searchParams;
+  const opts = bracketOptions({ ...savedParams(event?.bracketSettings), ...sp });
+  const saved = event?.bracketSettings as { savedAt?: string } | null | undefined;
+  const savedAt = saved?.savedAt
+    ? new Date(saved.savedAt).toLocaleString("en-US", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Los_Angeles" })
+    : null;
   const pick = (format: string) => groups.filter((g) => g.format === format);
   const asOf = new Date().toLocaleString("en-US", {
     weekday: "short",
@@ -50,6 +57,9 @@ export default async function BracketsPage({
         <BracketsSheet
           eventName={event?.name ?? null}
           asOf={asOf}
+          savedAt={savedAt}
+          justSaved={sp.saved === "1"}
+          saveAction={saveBracketSettings}
           threeOnThree={{ groups: pick("3on3"), schedule: scheduleBrackets(pick("3on3"), opts.threeOnThree), opts: opts.threeOnThree }}
           oneOnOne={{ groups: pick("1v1"), schedule: scheduleBrackets(pick("1v1"), opts.oneOnOne), opts: opts.oneOnOne }}
           threePoint={{ groups: pick("3point"), schedule: scheduleShooters(pick("3point"), opts.threePoint), opts: opts.threePoint }}

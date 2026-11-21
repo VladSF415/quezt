@@ -13,8 +13,9 @@ export type Reg = {
   createdAt: Date;
 };
 
-// seed = place in sign-up order within its group (1 = earliest).
-export type Entrant = { id: string; name: string; detail: string | null; paid: boolean; seed: number };
+// seed = place in sign-up order within its group (1 = earliest). shortName is what the public page shows:
+// the team name, or a solo player's first name and last initial.
+export type Entrant = { id: string; name: string; shortName: string; detail: string | null; paid: boolean; seed: number };
 export type Group = { format: Format; key: string; label: string; entrants: Entrant[] };
 
 // The 3-point contest's own age groups, from its rules flyer.
@@ -27,12 +28,20 @@ export const THREE_POINT_GROUPS = [
 
 const fullName = (p?: { first: string; last: string }) => (p ? `${p.first} ${p.last}`.trim() : "");
 
+function shortPlayer(p?: { first: string; last: string }): string {
+  if (!p) return "Player";
+  const first = p.first.trim();
+  const initial = p.last.trim().charAt(0).toUpperCase();
+  return (initial ? `${first} ${initial}.` : first) || "Player";
+}
+
 function toEntrant(r: Reg, seed: number): Entrant {
   if (r.format === "3on3") {
     const names = r.players.map(fullName).filter(Boolean).join(", ");
-    return { id: r.id, name: r.teamName?.trim() || "Unnamed team", detail: names || null, paid: r.paid, seed };
+    const team = r.teamName?.trim() || "Unnamed team";
+    return { id: r.id, name: team, shortName: team, detail: names || null, paid: r.paid, seed };
   }
-  return { id: r.id, name: fullName(r.players[0]) || "Player", detail: r.teamName?.trim() || null, paid: r.paid, seed };
+  return { id: r.id, name: fullName(r.players[0]) || "Player", shortName: shortPlayer(r.players[0]), detail: r.teamName?.trim() || null, paid: r.paid, seed };
 }
 
 // Contests in the site's order (3 on 3, 1v1, 3-point); groups youngest first; sign-ups in order.
@@ -256,5 +265,55 @@ export function bracketOptions(p: Params) {
       stations: num(p, "cp", 1, 1, 8),
       minutesEach: num(p, "mp", 2, 1, 60),
     } satisfies ShooterOptions,
+  };
+}
+
+// The settings the page's form sends, saved on the event so /brackets shows the coach's times.
+export const SETTING_KEYS = ["s3", "c3", "m3", "f3", "fa3", "s1", "c1", "m1", "f1", "fa1", "sp", "cp", "mp"] as const;
+
+export function settingsFromForm(fd: FormData): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const k of SETTING_KEYS) {
+    const v = fd.get(k);
+    if (typeof v === "string") out[k] = v.trim().slice(0, 10);
+  }
+  return out;
+}
+
+// The saved settings as page options; anything else in the stored JSON (savedAt, junk) is ignored.
+export function savedParams(json: unknown): Record<string, string> {
+  if (!json || typeof json !== "object" || Array.isArray(json)) return {};
+  const out: Record<string, string> = {};
+  for (const k of SETTING_KEYS) {
+    const v = (json as Record<string, unknown>)[k];
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
+}
+
+// What the public pages may hold: short names only, no rosters, no payment state. Built before
+// scheduling, so full names never reach the public pages' data.
+export function publicGroups(groups: Group[]): Group[] {
+  return groups.map((g) => ({
+    ...g,
+    entrants: g.entrants.map((e) => ({ id: e.id, name: e.shortName, shortName: e.shortName, detail: null, paid: true, seed: e.seed })),
+  }));
+}
+
+export type PublicBrackets = {
+  threeOnThree: { groups: Group[]; schedule: ReturnType<typeof scheduleBrackets>; opts: BracketOptions };
+  oneOnOne: { groups: Group[]; schedule: ReturnType<typeof scheduleBrackets>; opts: BracketOptions };
+  threePoint: { groups: Group[]; schedule: ReturnType<typeof scheduleShooters>; opts: ShooterOptions };
+};
+
+// Everything the public pages show, from the sign-ups and the coach's saved settings.
+export function publicBrackets(regs: Reg[], saved: unknown): PublicBrackets {
+  const groups = publicGroups(groupRegistrations(regs));
+  const opts = bracketOptions(savedParams(saved));
+  const pick = (f: string) => groups.filter((g) => g.format === f);
+  return {
+    threeOnThree: { groups: pick("3on3"), schedule: scheduleBrackets(pick("3on3"), opts.threeOnThree), opts: opts.threeOnThree },
+    oneOnOne: { groups: pick("1v1"), schedule: scheduleBrackets(pick("1v1"), opts.oneOnOne), opts: opts.oneOnOne },
+    threePoint: { groups: pick("3point"), schedule: scheduleShooters(pick("3point"), opts.threePoint), opts: opts.threePoint },
   };
 }
