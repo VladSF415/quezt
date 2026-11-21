@@ -3,6 +3,8 @@ import {
   CONTACT_EMAIL,
   CONTACT_NAME,
   CONTACT_PHONE,
+  RAIN_LOCATION,
+  SCHEDULE,
   telHref,
 } from "@/lib/site";
 
@@ -52,6 +54,7 @@ export function EventInfo({
 }: EventInfoProps) {
   const { place, lines } = splitLocation(location);
   const confirmed = !location.startsWith("TBD");
+  const rain = splitLocation(RAIN_LOCATION);
 
   return (
     <section id="event" className="border-b-2 border-black/60 py-12 md:py-16">
@@ -114,6 +117,55 @@ export function EventInfo({
                   </p>
                 )}
               </div>
+            </div>
+            <div className="taped p-6 pt-8">
+              <span className="scoretag scoretag--purple">If it rains</span>
+              <p className="mt-3 text-court/80">
+                The event moves indoors to
+              </p>
+              <p className="font-display mt-1 text-2xl text-court">
+                {rain.place}
+              </p>
+              <p className="mt-1 text-court/80">
+                {rain.lines.map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+              </p>
+              <a
+                href={directionsHref(RAIN_LOCATION)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="scoretag scoretag--purple mt-4 py-2"
+              >
+                Rain-day directions
+              </a>
+            </div>
+            <div className="taped p-6 pt-8">
+              <span className="scoretag">Schedule</span>
+              <ol className="mt-4 flex flex-col gap-2">
+                {SCHEDULE.map((step) => (
+                  <li
+                    key={step.time}
+                    className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-baseline gap-3"
+                  >
+                    <span className="font-display text-lg text-red">
+                      {step.time}
+                    </span>
+                    <span
+                      className={step.staff ? "text-court/60" : "text-court/90"}
+                    >
+                      {step.what}
+                      {step.staff && (
+                        <span className="ml-2 border border-court/40 px-1.5 py-0.5 text-[0.65rem] uppercase tracking-wider text-court/60">
+                          Staff
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ol>
             </div>
             <div className="taped p-6 pt-8">
               <span className="scoretag">Prizes</span>
